@@ -46,7 +46,40 @@ async function run() {
         const supportTicketCollection = database.collection('supportTicket');
         const loveproductCollection = database.collection('loveproduct');
         const walletTotalCollection = database.collection('walletTotal');
+        const noticeCollection = database.collection('Notice');
 
+
+
+
+
+        /*--------------------------------------------------------------
+        -----------------------------------------------------------------------
+        -------------------------------------------------------------------
+        ------------------------TapBrust project start----------------------
+        -----------------------------------------------------------------
+        ---------------------------------------------------------------------- */
+
+
+          // notice 
+          
+          
+
+
+
+
+
+
+
+
+
+
+
+         /*--------------------------------------------------------------
+        -----------------------------------------------------------------------
+        -------------------------------------------------------------------
+        ------------------------TapBrust project end----------------------
+        -----------------------------------------------------------------
+        ---------------------------------------------------------------------- */
 
         
     //    post product seller
@@ -64,6 +97,52 @@ async function run() {
             const result=await PotterServiceCollection.insertOne(user);
             res.json(result)
         });
+
+        app.get('/shownotice', async (req, res) => {
+          try {
+            const result = await noticeCollection.find({}).toArray();
+            res.json(result);
+          } catch (error) {
+            console.error('Error fetching notices:', error);
+            res.status(500).send('Server error');
+          }
+        });
+
+        app.patch('/update-wallet', async (req, res) => {
+          const { email, amount } = req.body;
+        
+          try {
+            // Fetch the user data to check if they've already joined Telegram
+            const user = await userCollection.findOne({ email: email });
+        
+            if (user && !user.telegramJoined) {
+              // If the user hasn't joined Telegram before, update the wallet
+              const result = await userCollection.updateOne(
+                { email: email },
+                {
+                  $inc: { wallet: amount },  // Increment the wallet balance by the specified amount
+                  $set: { telegramJoined: true }  // Mark the user as having joined Telegram
+                }
+              );
+        
+              if (result.modifiedCount > 0) {
+                res.status(200).send('Wallet updated and telegramJoined marked as true');
+              } else {
+                res.status(404).send('User not found');
+              }
+            } else {
+              // User has already joined Telegram or doesn't exist
+              res.status(400).send('Wallet update failed: User already joined Telegram or user not found');
+            }
+          } catch (error) {
+            console.error('Error updating wallet:', error);
+            res.status(500).send('Error updating wallet');
+          }
+        });
+        
+        
+        
+        
 
         app.get('/potterservicedetails/:id', async(req,res)=>{
             const id=req.params.id
@@ -235,42 +314,13 @@ app.put("/productupdate/:id", async (req, res) => {
     
     
     
-    app.get('/categories/:type', async (req, res) => {
-      const { type } = req.params;
-      console.log(`Received request for type: ${type}`);
-    
-      try {
-        // Fetch data from your collection
-        const data = await adminUploadProductCollection.find({}).toArray();
-    
-        // Filter categories based on the type
-        const categories = data.flatMap(item =>
-          item.services.filter(service => service.types === type)
-        );
-    
-        console.log('Fetched categories:', categories);
-    
-        if (categories.length === 0) {
-          return res.status(404).json({ message: 'No categories found for the specified type.' });
-        }
-    
-        res.json(categories);
-      } catch (err) {
-        console.error('Error fetching categories:', err);
-        res.status(500).json({ error: 'An error occurred while fetching categories.' });
-      }
-    });
+  
     
     
     
     
     
     
-    
-        // app.get('/getAdmin', async(req,res)=>{
-        //     const result=await buyerCollection.find({}).toArray()
-        //     res.json(result)
-        // });
         app.put('/service', async (req, res) => {
           console.log(req.body);
           const query = { types: req.body.types };
@@ -335,20 +385,9 @@ app.put("/productupdate/:id", async (req, res) => {
             res.json(result)
         });
 
-        // userdesignorder 
-        app.post('/userDesign', async(req,res) =>{
-            const user=req.body;
-          console.log(user)
-            // console.log(like)
-            const result=await DesignCollection.insertOne(user);
-            res.json(result)
-        });
+        
 
-        // getuserdesign 
-        app.get('/userDesign', async(req,res)=>{
-            const result=await DesignCollection.find({}).toArray()
-            res.json(result)
-        });
+       
 
         // get potter 
 
@@ -512,25 +551,7 @@ app.get('/api/users/:userId/balance', async (req, res) => {
        
         
 
-         // update product
-
-    // app.put('/updateProduct/:id', async(req,res)=>{
-    //     const  id= req.params.id;
-    //     const updateUser=req.body;
-    //     const filter={_id: ObjectId(id)};
-    //     const options={upsert:true};
-
-    //     const updateDoc={
-    //         $set:{
-    //             productName:updateUser.productName
-    //             // ProductPrice:ProductPrice
-    //         }
-    //     }
-    //     const result=await potterCollection.updateOne(filter,updateDoc,options);
-    //     res.json(result)
-    // })
-
-    // buyersharee update 
+        
 
     app.put("/updateProduct/:id", async (req, res) => {
 
@@ -768,7 +789,7 @@ app.put('/verify-payment/:email', async (req, res) => {
         { email: email },
         { 
           $set: { status: 'verified' },
-          $inc: { balance: 100 } // Increment balance by 100
+          $inc: { balance: 0 } // Increment balance by 100
         }
       );
       if (result.modifiedCount > 0) {
@@ -1516,92 +1537,7 @@ app.post('/update-balance', async (req, res) => {
 
   
 
-  // Endpoint to fetch payment data by user's email
-  // Endpoint to fetch payment data by user's email
- // Endpoint to fetch payment data by user's email
-// Endpoint to fetch payment data by user's email
-// Endpoint to fetch unprocessed payment data by user's email
-
-// app.get('/calculate-wallet/:email', async (req, res) => {
-//   const { email } = req.params;
-
-//   if (!email) {
-//     return res.status(400).json({ message: 'Email is required.' });
-//   }
-
-//   try {
-//     console.log(`Fetching payments for user: ${email}`);
-
-//     // Fetch all payments for the user with valid wallet_amount and status 'Processed'
-//     const payments = await paymentCollection.find({
-//       cus_email: email,
-//       wallet_amount: { $exists: true, $ne: null }
-//     }).toArray();
-
-//     console.log(`Found ${payments.length} payments for the user.`);
-
-//     let totalWalletAmount = 0;
-
-//     payments.forEach(payment => {
-//       let walletAmount = payment.wallet_amount;
-//       console.log(`Processing payment ID ${payment._id} with wallet_amount: ${walletAmount}`);
-
-//       // Convert wallet_amount to a float if it's a string
-//       if (typeof walletAmount === 'string') {
-//         walletAmount = parseFloat(walletAmount);
-//         console.log(`Converted wallet_amount to float: ${walletAmount}`);
-//       }
-
-//       // Only sum valid, non-NaN wallet_amounts greater than 0
-//       if (!isNaN(walletAmount) && walletAmount > 0) {
-//         totalWalletAmount += walletAmount;
-//       } else {
-//         console.log(`Invalid wallet_amount found: ${walletAmount}`);
-//       }
-//     });
-
-//     console.log(`Total wallet_amount to deduct: ${totalWalletAmount}`);
-
-//     // Fetch the user by email
-//     const user = await userCollection.findOne({ email });
-//     if (!user) {
-//       return res.status(404).json({ message: 'User not found.' });
-//     }
-
-//     const currentBalance = user.balance;
-//     console.log(`Current balance: ${currentBalance}`);
-
-//     // Check if current balance is greater than or equal to totalWalletAmount
-//     if (currentBalance < totalWalletAmount) {
-//       console.log('Insufficient balance for this deduction.');
-//       return res.status(400).json({ message: 'Insufficient balance for this deduction.' });
-//     }
-
-//     // Subtract total wallet amount from the user's current balance
-//     const newBalance = currentBalance - totalWalletAmount;
-//     console.log(`New balance after deduction: ${newBalance}`);
-
-//     // Update the user's balance in the database
-//     await userCollection.updateOne(
-//       { email },
-//       { $set: { balance: newBalance } }
-//     );
-
-//     // Mark the relevant payments as processed
-//     await paymentCollection.updateMany(
-//       { _id: { $in: payments.map(payment => payment._id) } },
-//       { $set: { processed: true } }
-//     );
-
-//     res.json({
-//       message: `A total of BDT ${totalWalletAmount} was deducted from your balance.`,
-//       newBalance
-//     });
-//   } catch (error) {
-//     console.error('Error during wallet amount processing:', error);
-//     res.status(500).json({ message: 'Internal server error.' });
-//   }
-// });
+  
 
 
 // Route to fetch wallet amounts and update user balance
@@ -1838,16 +1774,81 @@ app.patch('/api/reference-pull-income/:email', async (req, res) => {
 });
 
 
-// get reference code 
-app.get('/api/users', async (req, res) => {
+app.patch('/api/datawallet-pull-income/:email', async (req, res) => {
+  const email = req.params.email;
+
   try {
-    const users = await userCollection.find().toArray();
-    res.json(users);
+    // Find the user by email
+    const user = await userCollection.findOne({ email: email });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Calculate new balance
+    const newBalance = user.balance + user.wallet;
+
+    // Update the user's balance and reset total income
+    const result = await userCollection.updateOne(
+      { email: email },
+      {
+        $set: { balance: newBalance, wallet: 0 }
+      }
+    );
+
+    if (result.modifiedCount === 1) {
+      res.json({ message: 'Income successfully pulled to balance' });
+    } else {
+      res.status(500).json({ message: 'Failed to update user balance' });
+    }
   } catch (error) {
-    console.error('Error fetching users:', error);
-    res.status(500).json({ message: 'Error fetching users' });
+    console.error('Error pulling income:', error);
+    res.status(500).json({ message: 'An error occurred while processing your request' });
   }
 });
+
+// get reference code 
+app.get('/api/logged-in-user', async (req, res) => {
+  try {
+    const loggedInUserEmail = req.params.email;
+
+    // Find the logged-in user by their email
+    const loggedInUser = await userCollection.findOne({ email: loggedInUserEmail });
+
+    if (loggedInUser) {
+      res.json(loggedInUser); // Send logged-in user's details
+    } else {
+      res.status(404).json({ message: 'Logged-in user not found' });
+    }
+  } catch (error) {
+    console.error('Error fetching logged-in user:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+// Endpoint to fetch all users and filter by `refCode`
+app.get('/api/users', async (req, res) => {
+  try {
+    // Fetch all users from the collection
+    const users = await userCollection.find({}).toArray();
+
+    if (users.length > 0) {
+      res.json(users); // Return all users to the frontend
+    } else {
+      res.status(404).json({ message: 'No users found' });
+    }
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+
+
+
+
+
+
 
 // address the get 
 // get reference code 
@@ -2329,13 +2330,15 @@ app.delete("/manageAllOrderDelete/:id", async (req, res) => {
 
 //   post features product 
 //    post product buyer 
-// app.post('/PostFeatures', async(req,res) =>{
-//     const user=req.body;
-//   console.log(user);
+app.post('/addnotice', async(req,res) =>{
+    const user=req.body;
+  console.log(user);
   
-//     const result=await featuresCollection.insertOne(user);
-//     res.json(result)
-// });
+    const result=await noticeCollection.insertOne(user);
+    res.json(result)
+});
+
+
 app.post('/datacollect',async(req,res)=>{
     const value=req.body;
     console.log(value)
@@ -2397,6 +2400,30 @@ app.delete('/deleteUser/:id', async(req,res)=>{
 app.get('/adminConfarm', async(req,res)=>{
     const result=await userCollection.find({}).toArray()
     res.json(result)
+});
+
+app.delete('/delete-user/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Ensure the user collection is defined
+    if (!userCollection) {
+      return res.status(500).send({ message: 'Database not initialized' });
+    }
+
+    // Convert id string to MongoDB ObjectId
+    const objectId = new ObjectId(id);
+
+    const result = await userCollection.deleteOne({ _id: objectId });
+
+    if (result.deletedCount === 1) {
+      res.status(200).send({ message: 'User deleted successfully' });
+    } else {
+      res.status(404).send({ message: 'User not found' });
+    }
+  } catch (error) {
+    res.status(500).send({ message: 'Error deleting user', error });
+  }
 });
 
  // upadate status for put api 
