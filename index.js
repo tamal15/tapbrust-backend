@@ -47,6 +47,7 @@ async function run() {
         const loveproductCollection = database.collection('loveproduct');
         const walletTotalCollection = database.collection('walletTotal');
         const noticeCollection = database.collection('Notice');
+        const countCollection = database.collection('count');
 
 
 
@@ -63,8 +64,46 @@ async function run() {
           // notice 
           
           
-
-
+          app.patch('/update-count', async (req, res) => {
+            try {
+              // Increment the count and update timestamp
+              const result = await countCollection.findOneAndUpdate(
+                {},
+                { 
+                  $inc: { count: 1 }, // Increment the count by 1
+                  $set: { timestamp: new Date() } // Set the current timestamp
+                },
+                { returnDocument: 'after' } // Return the updated document
+              );
+          
+              if (result.value) {
+                res.status(200).json({ count: result.value.count, timestamp: result.value.timestamp });
+              } else {
+                res.status(404).send('Count document not found');
+              }
+            } catch (error) {
+              console.error('Error updating count:', error);
+              res.status(500).send('Error updating count');
+            }
+          });
+          
+          // Route to get current count and timestamp
+          app.get('/get-count', async (req, res) => {
+            try {
+              const countDocument = await countCollection.findOne({});
+              if (countDocument) {
+                res.status(200).json({
+                  count: countDocument.count,
+                  timestamp: countDocument.timestamp,
+                });
+              } else {
+                res.status(404).send('Count document not found');
+              }
+            } catch (error) {
+              console.error('Error fetching count:', error);
+              res.status(500).send('Error fetching count');
+            }
+          });
 
 
 
@@ -723,7 +762,7 @@ app.get('/api/users/:userId/balance', async (req, res) => {
                if (previousUser) {
                  await userCollection.updateOne(
                    { _id: previousUser._id },
-                   { $inc: { reference: 50 } } // Increment the reference field by 50 Taka
+                   { $inc: { reference: 5 } } // Increment the reference field by 50 Taka
                  );
                }
              }
@@ -2415,6 +2454,29 @@ app.delete('/delete-user/:id', async (req, res) => {
     const objectId = new ObjectId(id);
 
     const result = await userCollection.deleteOne({ _id: objectId });
+
+    if (result.deletedCount === 1) {
+      res.status(200).send({ message: 'User deleted successfully' });
+    } else {
+      res.status(404).send({ message: 'User not found' });
+    }
+  } catch (error) {
+    res.status(500).send({ message: 'Error deleting user', error });
+  }
+});
+app.delete('/delete-noticeuser/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Ensure the user collection is defined
+    if (!userCollection) {
+      return res.status(500).send({ message: 'Database not initialized' });
+    }
+
+    // Convert id string to MongoDB ObjectId
+    const objectId = new ObjectId(id);
+
+    const result = await noticeCollection.deleteOne({ _id: objectId });
 
     if (result.deletedCount === 1) {
       res.status(200).send({ message: 'User deleted successfully' });
