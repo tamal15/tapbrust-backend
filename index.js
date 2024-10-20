@@ -818,6 +818,15 @@ app.get('/usersdata/pending', async (req, res) => {
       res.status(500).send('Internal Server Error');
     }
   });
+app.get('/allusersdata/', async (req, res) => {
+    try {
+      const pendingUsers = await userCollection.find({ }).toArray();
+      res.json(pendingUsers);
+    } catch (error) {
+      console.error('Error fetching pending users:', error);
+      res.status(500).send('Internal Server Error');
+    }
+  });
   
   // Endpoint to verify user payment and add balance
 app.put('/verify-payment/:email', async (req, res) => {
