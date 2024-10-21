@@ -18,8 +18,19 @@ app.use(express.json())
 // const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.utq7asn.mongodb.net/?retryWrites=true&w=majority`;
 // const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
-var uri = "mongodb://e-commerce-site:jxjFr9MI4pLrJS0s@ac-32bm4ox-shard-00-00.utq7asn.mongodb.net:27017,ac-32bm4ox-shard-00-01.utq7asn.mongodb.net:27017,ac-32bm4ox-shard-00-02.utq7asn.mongodb.net:27017/?ssl=true&replicaSet=atlas-1mjf8p-shard-0&authSource=admin&retryWrites=true&w=majority";
-const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
+// var uri = "mongodb://e-commerce-site:jxjFr9MI4pLrJS0s@ac-32bm4ox-shard-00-00.utq7asn.mongodb.net:27017,ac-32bm4ox-shard-00-01.utq7asn.mongodb.net:27017,ac-32bm4ox-shard-00-02.utq7asn.mongodb.net:27017/?ssl=true&replicaSet=atlas-1mjf8p-shard-0&authSource=admin&retryWrites=true&w=majority";
+
+// const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
+
+const uri = "mongodb+srv://e-commerce-site:jxjFr9MI4pLrJS0s@cluster0.utq7asn.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+const client = new MongoClient(uri, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  }
+});
 
 async function run() {
 
@@ -64,46 +75,55 @@ async function run() {
           // notice 
           
           
-          app.patch('/update-count', async (req, res) => {
-            try {
-              // Increment the count and update timestamp
-              const result = await countCollection.findOneAndUpdate(
-                {},
-                { 
-                  $inc: { count: 1 }, // Increment the count by 1
-                  $set: { timestamp: new Date() } // Set the current timestamp
-                },
-                { returnDocument: 'after' } // Return the updated document
-              );
+          // PATCH route to update user count and timestamp
+app.patch('/update-count', async (req, res) => {
+  const { email } = req.body; // Extract email from the request body
+
+  if (!email) {
+    return res.status(400).send('Email is required');
+  }
+
+  try {
+    const result = await userCollection.findOneAndUpdate(
+      { email }, // Match user by email
+      { 
+        $inc: { count: 1 }, // Increment the count by 1
+        $set: { timestamp: new Date() } // Update the timestamp to current time
+      },
+      { returnDocument: 'after' } // Return the updated document
+    );
+
+    if (result.value) {
+      res.status(200).json({ count: result.value.count, timestamp: result.value.timestamp });
+    } else {
+      res.status(404).send('User not found');
+    }
+  } catch (error) {
+    console.error('Error updating count:', error);
+    res.status(500).send('Error updating count');
+  }
+});
+
+// GET route to retrieve the current count and timestamp for a user
+app.get('/get-count/:email', async (req, res) => {
+  const { email } = req.params;
+
+  try {
+    const user = await userCollection.findOne({ email });
+
+    if (user) {
+      res.status(200).json({ count: user.count, timestamp: user.timestamp });
+    } else {
+      res.status(404).json({ message: 'User not found' });
+    }
+  } catch (error) {
+    console.error('Error fetching count:', error);
+    res.status(500).json({ message: 'Error fetching count' });
+  }
+});
+
           
-              if (result.value) {
-                res.status(200).json({ count: result.value.count, timestamp: result.value.timestamp });
-              } else {
-                res.status(404).send('Count document not found');
-              }
-            } catch (error) {
-              console.error('Error updating count:', error);
-              res.status(500).send('Error updating count');
-            }
-          });
           
-          // Route to get current count and timestamp
-          app.get('/get-count', async (req, res) => {
-            try {
-              const countDocument = await countCollection.findOne({});
-              if (countDocument) {
-                res.status(200).json({
-                  count: countDocument.count,
-                  timestamp: countDocument.timestamp,
-                });
-              } else {
-                res.status(404).send('Count document not found');
-              }
-            } catch (error) {
-              console.error('Error fetching count:', error);
-              res.status(500).send('Error fetching count');
-            }
-          });
 
 
 
