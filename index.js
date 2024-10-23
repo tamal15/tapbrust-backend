@@ -38,27 +38,17 @@ async function run() {
         await client.connect();
         console.log("connected to database");
         const database = client.db('e-commerce');
-        const buyerCollection = database.collection('buyerProduct');
-        const potterCollection = database.collection('buyerPotter');
         const userCollection = database.collection('users');
-        const likeCollection = database.collection('like');
-        const paymentCollection = database.collection('payment'); 
-        const adminPaymentCollection = database.collection('Adminpaymentdata');
         const featuresCollection = database.collection('features');
-        const fashionCollection = database.collection('fashion');
         const userReviewCollection = database.collection('reviewCollected');
-        const adminUploadProductCollection = database.collection('adminProducts');
         const adminUploadPotterCollection = database.collection('adminPotter');
         const feedbacksCollection = database.collection('userfeedbacks');
-        const DesignCollection = database.collection('designUser');
-        const PotterServiceCollection = database.collection('potterService');
         const bkashCollection = database.collection('bkashcollection');
         const withdrawsCollection = database.collection('withdrawCollection');
-        const supportTicketCollection = database.collection('supportTicket');
-        const loveproductCollection = database.collection('loveproduct');
         const walletTotalCollection = database.collection('walletTotal');
         const noticeCollection = database.collection('Notice');
         const countCollection = database.collection('count');
+        const paymentCollection = database.collection('payment');
 
 
 
@@ -141,21 +131,8 @@ app.get('/get-count/:email', async (req, res) => {
         ---------------------------------------------------------------------- */
 
         
-    //    post product seller
-        app.post('/postBuyer', async(req,res) =>{
-            const user=req.body;
-          console.log(user);
-          
-            const result=await buyerCollection.insertOne(user);
-            res.json(result)
-        });
-        app.post('/potterservice', async(req,res) =>{
-            const user=req.body;
-          console.log(user);
-          
-            const result=await PotterServiceCollection.insertOne(user);
-            res.json(result)
-        });
+    
+     
 
         app.get('/shownotice', async (req, res) => {
           try {
@@ -199,289 +176,11 @@ app.get('/get-count/:email', async (req, res) => {
           }
         });
         
-        
-        
-        
-
-        app.get('/potterservicedetails/:id', async(req,res)=>{
-            const id=req.params.id
-            const query={_id:ObjectId(id)}
-            const result=await PotterServiceCollection.findOne(query)
-            res.json(result)
-        });
-
-        app.get('/postBuyer', async(req,res)=>{
-            const result=await buyerCollection.find({}).toArray()
-            res.json(result)
-        });
-        app.get('/potterservice', async(req,res)=>{
-            const result=await PotterServiceCollection.find({}).toArray()
-            res.json(result)
-        });
-
-        // admin post product to database 
-        //    post product buye
-        app.post('/postadminProduct', async(req,res) =>{
-            const user=req.body;
-          console.log(user);
-          
-            const result=await adminUploadProductCollection.insertOne(user);
-            res.json(result)
-        });
-
-        app.get('/getpostadmin', async(req,res)=>{
-          const result=await adminUploadProductCollection.find({}).toArray()
-          res.json(result)
-      });
-
-      app.get("/editproduct/:id", async (req, res) => {
-        try {
-          const id = req.params.id;
-      
-          // Validate and convert the ID to ObjectId
-          if (!ObjectId.isValid(id)) {
-            return res.status(400).json({ message: "Invalid product ID" });
-          }
-      
-          const query = { _id: new ObjectId(id) };
-          const product = await adminUploadProductCollection.findOne(query);
-      
-          if (!product) {
-            return res.status(404).json({ message: "Product not found" });
-          }
-      
-          res.json(product);
-        } catch (error) {
-          console.error("Error fetching product:", error);
-          res.status(500).json({ message: "Internal server error" });
-        }
-      });
-
-
-      // delete 
-     
-      
-      app.delete('/productdelete/:parentId/:index', async (req, res) => {
-        const { parentId, index } = req.params;
+   
     
-        try {
-            // Validate parentId is a valid ObjectId
-            if (!ObjectId.isValid(parentId)) {
-                return res.status(400).json({ error: 'Invalid product ID format' });
-            }
-    
-            const productId = new ObjectId(parentId);
-    
-            // Ensure index is an integer
-            const serviceIndex = parseInt(index);
-            if (isNaN(serviceIndex)) {
-                return res.status(400).json({ error: 'Invalid service index format' });
-            }
-    
-            // Perform the update operation to remove the service by its index
-            const result = await adminUploadProductCollection.updateOne(
-                { _id: productId }, // Find the product by its _id
-                { $unset: { [`services.${serviceIndex}`]: "" } } // Unset the service at the given index
-            );
-    
-            // Clean up the array to remove any null or undefined values left by $unset
-            await adminUploadProductCollection.updateOne(
-                { _id: productId },
-                { $pull: { services: null } } // Remove null values resulting from $unset
-            );
-    
-            if (result.modifiedCount > 0) {
-                res.status(200).json({ deletedCount: result.modifiedCount });
-            } else {
-                res.status(404).json({ message: 'Product or service not found' });
-            }
-        } catch (err) {
-            console.error('Error deleting service:', err);
-            res.status(500).json({ error: 'An error occurred while deleting the service' });
-        }
-    });
-      
-
-      
-      
-
-app.put("/productupdate/:id", async (req, res) => {
-  try {
-    const id = req.params.id;
-
-    // Validate and convert the ID to ObjectId
-    if (!ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid product ID" });
-    }
-
-    const query = { _id: new ObjectId(id) };
-    const updatedProduct = req.body;
-
-    const updateDoc = {
-      $set: updatedProduct,
-    };
-
-    const result = await adminUploadProductCollection.updateOne(query, updateDoc);
-
-    if (result.modifiedCount > 0) {
-      res.json({ message: "Product updated successfully", modifiedCount: result.modifiedCount });
-    } else {
-      res.status(400).json({ message: "No changes made" });
-    }
-  } catch (error) {
-    console.error("Error updating product:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-});
-
-
-
-
-      app.get('/category/:category', async (req, res) => {
-        const category = req.params.category;
-        console.log('Requested Category:', category);
-        
-        try {
-            // Query the database for products where the 'services' array contains an object with the desired category
-            const products = await adminUploadProductCollection.find({
-                'services.categories': category
-            }).toArray();
-            
-            // Transform the data to ensure it fits the frontend expectations
-            const formattedProducts = products.map(product => ({
-                ...product,
-                services: product.services
-                    .filter(service => service.categories === category) // Filter services based on category
-                    .map(service => ({
-                        types: service.types,
-                        ProductPrice: service.ProductPrice,
-                        img: service.img,
-                        categories: service.categories,
-                        description: service.description,
-                        Fabric: service.Fabric,
-                        size: service.size,
-                        multipleimg: service.multipleimg,
-                    })) // Map to the required fields
-            }));
-            
-            res.json(formattedProducts);
-        } catch (error) {
-            console.error('Error fetching products:', error);
-            res.status(500).json({ error: 'Internal Server Error' });
-        }
-    });
-    
-    
-    
-  
-    
-    
-    
-    
-    
-    
-        app.put('/service', async (req, res) => {
-          console.log(req.body);
-          const query = { types: req.body.types };
-          const options = { upsert: true };
-          
-          const updateDoc = { $push: { services: req.body } };
-          const result = await adminUploadProductCollection.updateOne(query, updateDoc, options);
-          
-          res.json(result);
-        });
-        
-
-        // admin all product show to ui 
-        // get sharee 
-    app.get("/adminShowproduct", async (req, res) => {
-        const page = req.query.page;
-        const size = parseInt(req.query.size);
-        const query = req.query;
-        delete query.page
-        delete query.size
-        Object.keys(query).forEach(key => {
-            if (!query[key])
-                delete query[key]
-        });
-
-        if (Object.keys(query).length) {
-            const cursor = adminUploadProductCollection.find(query, status = "approved");
-            const count = await cursor.count()
-            const allQuestions = await cursor.skip(page * size).limit(size).toArray()
-            res.json({
-                allQuestions, count
-            });
-        } else {
-            const cursor = adminUploadProductCollection.find({
-                // status: "approved"
-            });
-            const count = await cursor.count()
-            const allQuestions = await cursor.skip(page * size).limit(size).toArray()
-
-            res.json({
-                allQuestions, count
-            });
-        }
-
-    });
-
-
-
-    // love product post the database 
-
-    // Route to handle "like" and product information
-  
-
-
-        // potter post 
-
-        app.post('/postPotter', async(req,res) =>{
-            const user=req.body;
-          console.log(user)
-            // console.log(like)
-            const result=await potterCollection.insertOne(user);
-            res.json(result)
-        });
-
-        
-
        
 
-        // get potter 
-
-        app.get("/getPotter", async (req, res) => {
-            const page = req.query.page;
-            const size = parseInt(req.query.size);
-            const query = req.query;
-            delete query.page
-            delete query.size
-            Object.keys(query).forEach(key => {
-                if (!query[key])
-                    delete query[key]
-            });
-    
-            if (Object.keys(query).length) {
-                const cursor = potterCollection.find(query, status = "approved");
-                const count = await cursor.count()
-                const allQuestions = await cursor.skip(page * size).limit(size).toArray()
-                res.json({
-                    allQuestions, count
-                });
-            } else {
-                const cursor = potterCollection.find({
-                    // status: "approved"
-                });
-                const count = await cursor.count()
-                const allQuestions = await cursor.skip(page * size).limit(size).toArray()
-    
-                res.json({
-                    allQuestions, count
-                });
-            }
-    
-        });
-
+        
 
         // admin potter product upload 
         // potter post 
@@ -607,62 +306,7 @@ app.get('/api/users/:userId/balance', async (req, res) => {
   
   
 
-       
-        
 
-        
-
-    app.put("/updateProduct/:id", async (req, res) => {
-
-        const id=req.params.id;
-        const updateUser=req.body
-        console.log(updateUser)
-        const filter={_id: ObjectId(id)};
-        const options={upsert:true};
-
-        const updateDoc={
-            $set:{
-                productName:updateUser.productName,
-                ProductPrice:updateUser.ProductPrice
-            }
-        }
-        const result=await buyerCollection.updateOne(filter,updateDoc,options);
-        console.log('uodateinf',id);
-        res.json(result)
-
-    })
-
-    app.get('/update/:id', async(req,res)=>{
-        const id=req.params.id;
-        const query={_id:ObjectId(id)};
-        const user=await buyerCollection.findOne(query)
-        res.json(user)
-    })
-   
-
-
-     // buyerpottery update 
-
-     app.put("/updatePotter/:id", async (req, res) => {
-
-        const id=req.params.id;
-        const updateUser=req.body
-        console.log(updateUser)
-        const filter={_id: ObjectId(id)};
-        const options={upsert:true};
-
-        const updateDoc={
-            $set:{
-                productName:updateUser.productName,
-                ProductPrice:updateUser.ProductPrice
-            }
-        }
-        const result=await potterCollection.updateOne(filter,updateDoc,options);
-        console.log('uodateinf',id);
-        res.json(result)
-
-    });
-     // schedule update 
 
      app.put("/updatesSchedules/:id", async (req, res) => {
 
@@ -705,13 +349,7 @@ app.get('/api/users/:userId/balance', async (req, res) => {
 
     })
 
-    app.get('/potter/:id', async(req,res)=>{
-        const id=req.params.id;
-        const query={_id:ObjectId(id)};
-        const user=await potterCollection.findOne(query)
-        res.json(user)
-    })
-   
+  
     app.get('/showpay/:id', async(req,res)=>{
         const id=req.params.id;
         const query={_id:ObjectId(id)};
@@ -721,42 +359,6 @@ app.get('/api/users/:userId/balance', async (req, res) => {
    
      
 
-        // details show product 
-        app.get('/product/:id', async(req,res)=>{
-            const id=req.params.id
-            const query={_id:ObjectId(id)}
-            const result=await buyerCollection.findOne(query)
-            res.json(result)
-        });
-        app.get('/adminpotterdetails/:categories', async(req,res)=>{
-            // const id=req.params.id
-            const filter = { _id: ObjectId(req.params.id) };
-            console.log(filter)
-            const post = await PotterServiceCollection.findOne(filter);
-            console.log(post)
-            const check = post?.services?.filter(like => like?._id === req?.params?._id)
-           
-            
-            
-            console.log(check)
-            // const query={_id:ObjectId(id)}
-            // const result=await PotterServiceCollection.findOne(query)
-            // res.json(result)
-        });
-        // details show admin product 
-        app.get('/details/:id', async(req,res)=>{
-            const id=req.params.id
-            const query={_id:ObjectId(id)}
-            const result=await adminUploadProductCollection.findOne(query)
-            res.json(result)
-        });
-        // details show admin product 
-        app.get('/potterdetails/:id', async(req,res)=>{
-            const id=req.params.id
-            const query={_id:ObjectId(id)}
-            const result=await potterCollection.findOne(query)
-            res.json(result)
-        });
 
 
          // Add a route for user registration
@@ -766,7 +368,7 @@ app.get('/api/users/:userId/balance', async (req, res) => {
            const newUser = req.body; // Get the new user's data from the request body
          
            // Generate a unique transaction ID
-           newUser.tran_id = uuidv4(); // Add tran_id to the newUser object
+           newUser.tran_id = uuidv4().slice(0, 8); // Add tran_id to the newUser object
          
            const refCode = newUser.refCode; // Extract the reference code from the new user
          
@@ -1017,143 +619,9 @@ app.put('/verify-payment/:email', async (req, res) => {
     });
 
 
-    // get sharee 
-    app.get("/sharee", async (req, res) => {
-        const page = req.query.page;
-        const size = parseInt(req.query.size);
-        const query = req.query;
-        delete query.page
-        delete query.size
-        Object.keys(query).forEach(key => {
-            if (!query[key])
-                delete query[key]
-        });
 
-        if (Object.keys(query).length) {
-            const cursor = buyerCollection.find(query, status = "approved");
-            const count = await cursor.count()
-            const allQuestions = await cursor.skip(page * size).limit(size).toArray()
-            res.json({
-                allQuestions, count
-            });
-        } else {
-            const cursor = buyerCollection.find({
-                // status: "approved"
-            });
-            const count = await cursor.count()
-            const allQuestions = await cursor.skip(page * size).limit(size).toArray()
-
-            res.json({
-                allQuestions, count
-            });
-        }
-
-    });
-
-
-    app.get("/buyerproducts/:email", async (req, res) => {
-        // const buyeremail=req.body.cartProducts.map((data)=>data.buyerEmail)
-        console.log(req.params.email);
-        const email = req.params.email;
-        const result = await buyerCollection
-          .find({ buyerEmail: email })
-          .toArray();
-          console.log(result)
-        res.send(result);
-      });
-
-
-    //   potter upload 
-    app.get("/potterproducts/:email", async (req, res) => {
-        // const buyeremail=req.body.cartProducts.map((data)=>data.buyerEmail)
-        console.log(req.params.email);
-        const email = req.params.email;
-        const result = await potterCollection
-          .find({ buyerEmail: email })
-          .toArray();
-          console.log(result)
-        res.send(result);
-      });
-
-
-
-
-
-
-
-    // delete book 
-    app.delete('/deleteProduct/:id',async(req,res)=>{
-        const result= await buyerCollection.deleteOne({_id:ObjectId(req.params.id)});
-        res.json(result)
-    });
-
-    // delete potter 
-    // delete book 
-    app.delete('/deletePotter/:id',async(req,res)=>{
-        const result= await potterCollection.deleteOne({_id:ObjectId(req.params.id)});
-        res.json(result)
-    });
-
-    // delete admin product
-    // delete admin product
-    app.delete('/deleteadmin/:id',async(req,res)=>{
-        const result= await adminUploadProductCollection.deleteOne({_id:ObjectId(req.params.id)});
-        res.json(result)
-    });
-
-
-    app.put("/BlogStatusUpdate/:id", async (req, res) => {
-     console.log(req.body.date)
-        const filter = { _id: ObjectId(req.params.id) };
-
-        const result = await buyerCollection.updateOne(filter, {
-            $set: {
-                schedule: req.body.date,
-            },
-        });
-        res.send(result);
-    });
-
-
-    // app.put("/updatesPurchase/:id", async (req, res) => {
-
-    //     const id=req.params.id;
-    //     const updateUser=req.body
-    //     console.log(updateUser)
-    //     const filter={_id: ObjectId(id)};
-    //     const options={upsert:true};
-
-    //     const updateDoc={
-    //         $set:{
-    //             // schedules:updateUser.schedules,
-    //             purchase:updateUser.purchase
-    //         }
-    //     }
-    //     const result=await paymentCollection.updateOne(filter,updateDoc,options);
-    //     console.log('uodateinf',id);
-    //     res.json(result)
-
-    // })
-
-    // app.put("/service/:id", async (req, res) => {
-    //     console.log(req.body)
-    //     const filter = { _id: ObjectId(req.params.id) };
-    //     console.log(filter)
-    //     const options={upsert:true};
-    //             const updateDoc={
-    //            $push:{
-    //                // schedules:updateUser.schedules,
-    //                services: req.body,
-    //            }
-    //        }
-   
       
-    //    const result=await PotterServiceCollection.updateMany(filter,updateDoc,options);
-           
-    //        res.send(result);
-    //    });
     
-
 
     //sslcommerz init
 
@@ -1184,299 +652,14 @@ app.put('/verify-payment/:email', async (req, res) => {
     //     const result=await userCollection.updateOne(query,updateDoc);
     //     res.json(result)
     // })
-    app.put('/service', async (req, res) => {
-        
-            console.log(req.body)
-            // const filter = { _id: ObjectId(req.params.id) };
-            const query={
-                categories:req.body.categories}
-            const options = { upsert: true };
-            // const data=req.body
-           
-               
-                    const updateDoc = { $push: { services: req.body } };
-                    const result = await PotterServiceCollection.updateOne(query, updateDoc, options);
-                    res.json(result)
-                
-              
-
-
-    })
-
+   
    
 
 
-     // ================================Like in post====================================================
-        //Link post----------------------------------------------------------------------------------------
-        app.put('/like/:id', async (req, res) => {
-            try {
-                // console.log(req.body)
-                const filter = { _id: ObjectId(req.params.id) };
-                const post = await buyerCollection.findOne(filter);
-                const check = post?.likes?.filter(like => like?.email?.toString() === req?.body?.email).length;
-                if (!check) {
-                    const options = { upsert: true };
-                    const updateDoc = { $push: { likes: req.body } };
-                    const result = await buyerCollection.updateOne(filter, updateDoc, options);
-                    res.status(200).json(result)
-                } else {
-                    return res.status(400).json({ massage: "Post has not yet been liked" });
-                }
-
-            } catch (err) {
-                res.status(500).send('Server Error')
-            }
-
-        })
 
 
 
 
-            //unLink post-----------------------------------------------------------------------------------------
-            app.put('/unlike/:id', async (req, res) => {
-                try {
-                    const filter = { _id: ObjectId(req.params.id) };
-                    const post = await buyerCollection.findOne(filter);
-                    const check = post?.likes?.filter(like => like?.email?.toString() === req?.body?.email).length;
-                    if (check) {
-                        const removeIndex = post?.likes?.filter(like => like.email.toString() !== req.body.email);
-                        const options = { upsert: true };
-                        const updateDoc = { $set: { likes: removeIndex } };
-                        const result = await buyerCollection.updateOne(filter, updateDoc, options);
-                        res.status(200).json(result,)
-                    } else {
-                        return res.status(400).json({ massage: "Post has not yet been liked" });
-                    }
-                } catch (err) {
-                    res.status(500).send('Server Error')
-                }
-            })
-    
-    // =======================================================================================================================
-    
-    //   like post potter 
-    //Link post----------------------------------------------------------------------------------------
-    app.put('/potterlike/:id', async (req, res) => {
-        try {
-            // console.log(req.body)
-            const filter = { _id: ObjectId(req.params.id) };
-            const post = await potterCollection.findOne(filter);
-            const check = post?.likes?.filter(like => like?.email?.toString() === req?.body?.email).length;
-            if (!check) {
-                const options = { upsert: true };
-                const updateDoc = { $push: { likes: req.body } };
-                const result = await potterCollection.updateOne(filter, updateDoc, options);
-                res.status(200).json(result)
-            } else {
-                return res.status(400).json({ massage: "Post has not yet been liked" });
-            }
-
-        } catch (err) {
-            res.status(500).send('Server Error')
-        }
-
-    })
-
-
-    app.put('/potterunlike/:id', async (req, res) => {
-        try {
-            const filter = { _id: ObjectId(req.params.id) };
-            const post = await potterCollection.findOne(filter);
-            const check = post?.likes?.filter(like => like?.email?.toString() === req?.body?.email).length;
-            if (check) {
-                const removeIndex = post?.likes?.filter(like => like.email.toString() !== req.body.email);
-                const options = { upsert: true };
-                const updateDoc = { $set: { likes: removeIndex } };
-                const result = await potterCollection.updateOne(filter, updateDoc, options);
-                res.status(200).json(result,)
-            } else {
-                return res.status(400).json({ massage: "Post has not yet been liked" });
-            }
-        } catch (err) {
-            res.status(500).send('Server Error')
-        }
-    })
-
-
-     // ================================Like in post admin====================================================
-        //Link post----------------------------------------------------------------------------------------
-
-
-        const { ObjectId } = require('mongodb'); // Ensure ObjectId is imported
-
-        app.put('/adminlike/:id', async (req, res) => {
-            try {
-                const postId = req.params.id;
-        
-                // Validate if the provided ID is a valid ObjectId
-                if (!ObjectId.isValid(postId)) {
-                    console.error(`Invalid ID format: ${postId}`);
-                    return res.status(400).json({ message: "Invalid post ID format" });
-                }
-        
-                const filter = { _id: new ObjectId(postId) };
-                const userLike = { email: req.body.email, userId: req.body.userId };
-        
-                // Find the post
-                const post = await adminUploadProductCollection.findOne(filter);
-                if (!post) {
-                    return res.status(404).json({ message: "Post not found" });
-                }
-        
-                // Check if the user has already liked the post
-                const alreadyLiked = post.likes.some(like => like.email === req.body.email);
-        
-                if (alreadyLiked) {
-                    return res.status(400).json({ message: "Post already liked by this user" });
-                }
-        
-                // Add the like
-                const updateDoc = { $push: { likes: userLike } };
-                const result = await adminUploadProductCollection.updateOne(filter, updateDoc);
-                if (result.modifiedCount === 0) {
-                    return res.status(400).json({ message: "Failed to update like" });
-                }
-        
-                // Fetch and return the updated post
-                const updatedPost = await adminUploadProductCollection.findOne(filter);
-                res.status(200).json(updatedPost);
-        
-            } catch (err) {
-                console.error('Error in PUT /adminlike/:id', err);
-                res.status(500).send('Server Error');
-            }
-        });
-        
-        
-      
-      
-      
-      
-      
-        app.delete('/adminlike/:id', async (req, res) => {
-          try {
-              const postId = req.params.id;
-      
-              // Validate if the provided ID is a valid ObjectId
-              if (!ObjectId.isValid(postId)) {
-                  console.error(`Invalid ID format: ${postId}`);
-                  return res.status(400).json({ message: "Invalid post ID format" });
-              }
-      
-              const filter = { _id: new ObjectId(postId) };
-              const userEmail = req.body.email;
-      
-              // Remove the like
-              const updateDoc = { $pull: { likes: { email: userEmail } } };
-              const result = await adminUploadProductCollection.updateOne(filter, updateDoc);
-      
-              if (result.modifiedCount === 0) {
-                  return res.status(400).json({ message: "Like not found or already removed" });
-              }
-      
-              // Fetch and return the updated post
-              const updatedPost = await adminUploadProductCollection.findOne(filter);
-              res.status(200).json(updatedPost);
-      
-          } catch (err) {
-              console.error('Error in DELETE /adminlike/:id', err);
-              res.status(500).send('Server Error');
-          }
-      });
-      
-      
-    
-    
-      
-      
-      
-      
-      
-
-          //admin unLink post-----------------------------------------------------------------------------------------
-          app.put('/adminunlike/:id', async (req, res) => {
-            try {
-                const filter = { _id: ObjectId(req.params.id) };
-                const post = await adminUploadProductCollection.findOne(filter);
-                const check = post?.likes?.filter(like => like?.email?.toString() === req?.body?.email).length;
-                if (check) {
-                    const removeIndex = post?.likes?.filter(like => like.email.toString() !== req.body.email);
-                    const options = { upsert: true };
-                    const updateDoc = { $set: { likes: removeIndex } };
-                    const result = await adminUploadProductCollection.updateOne(filter, updateDoc, options);
-                    res.status(200).json(result,)
-                } else {
-                    return res.status(400).json({ massage: "Post has not yet been liked" });
-                }
-            } catch (err) {
-                res.status(500).send('Server Error')
-            }
-        })
-
-// =======================================================================================================================
-
-
-// Route to handle 'like' (saving the product)
-app.post('/addLikedProductdata', async (req, res) => {
-  const { categories, size, img, description,ProductPrice, userEmail } = req.body;
-  console.log(req.body)
-  
- 
-
-  try {
-    
-    
-    const newProduct = {
-      categories,
-      size,
-      img,
-      description,
-      ProductPrice,
-      userEmail,
-      likedAt: new Date(), // Optional: add a timestamp
-    };
-
-    const result = await loveproductCollection.insertOne(newProduct);
-    console.log(result)
-    res.status(201).send({ message: 'Product liked successfully', data: result.ops });
-  } catch (error) {
-    console.error('Error adding liked product:', error);
-    res.status(500).send({ message: 'Server error', error });
-  }
-});
-
-
-app.get("/getlovesproduct", async (req, res) => {
-  const page = req.query.page;
-  const size = parseInt(req.query.size);
-  const query = req.query;
-  delete query.page
-  delete query.size
-  Object.keys(query).forEach(key => {
-      if (!query[key])
-          delete query[key]
-  });
-
-  if (Object.keys(query).length) {
-      const cursor = loveproductCollection.find(query, status = "approved");
-      const count = await cursor.count()
-      const allQuestions = await cursor.skip(page * size).limit(size).toArray()
-      res.json({
-          allQuestions, count
-      });
-  } else {
-      const cursor = loveproductCollection.find({
-          // status: "approved"
-      });
-      const count = await cursor.count()
-      const allQuestions = await cursor.skip(page * size).limit(size).toArray()
-
-      res.json({
-          allQuestions, count
-      });
-  }
-
-});
 
 
 app.post('/update-balance', async (req, res) => {
@@ -1669,75 +852,6 @@ app.get('/payment-collection/:email', async (req, res) => {
   }
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-
-
-// Endpoint to update user's balance
-// Endpoint to update user's balance
-// Endpoint to update user's balance
 
 
 
@@ -2110,19 +1224,7 @@ app.get('/all/withdraw-history', async (req, res) => {
 
 
 
-app.put('/updateCourier/:id', (req, res) => {
-  const id = req.params.id;
-  const { courier_id } = req.body;
 
-  // Find the document and update the courier_id
-  paymentCollection.updateOne({ _id: ObjectId(id) }, { $set: { courier_id } }, (err, result) => {
-    if (err) {
-      res.status(500).json({ error: 'Failed to update courier ID' });
-    } else {
-      res.json({ message: 'Courier ID updated successfully' });
-    }
-  });
-});
 
 
 app.get('/userbalancedata/:email', async (req, res) => {
@@ -2268,43 +1370,6 @@ app.post ('/fail', async(req,res)=>{
 
 
 
-
-
-
-
-
-
-
-
-//   client order and single mail 
-// email get my Order==============================================
- // get myorder 
- app.get("/myOrder/:email", async (req, res) => {
-  try {
-    const email = req.params.email;
-    const status = req.query.status || ''; // Get status from query parameters
-    const date = req.query.date || ''; // Get date from query parameters
-
-    // Build the filter query
-    const filter = { cus_email: email };
-
-    if (status) {
-      filter.status = status;
-    }
-
-    if (date) {
-      const formattedDate = new Date(date).toLocaleDateString(); // Format the date to match with database entries
-      filter.date = formattedDate;
-    }
-
-    const result = await paymentCollection.find(filter).toArray();
-    res.send(result);
-  } catch (error) {
-    console.error("Error fetching orders:", error);
-    res.status(500).send("Internal Server Error");
-  }
-});
-
  app.get("/my/:email", async (req, res) => {
     // const buyeremail=req.body.emails.map((data)=>data.buyerEmail)
     // console.log(emails)
@@ -2317,26 +1382,6 @@ app.post ('/fail', async(req,res)=>{
     res.send(result);
   });
 
-
-  // filter data my order 
-  app.get('/api/orders', async (req, res) => {
-    try {
-        const { date, status } = req.query;
-        let filter = {};
-
-        if (date) {
-            filter.date = new Date(date);
-        }
-        if (status && status !== 'all') {
-            filter.status = status;
-        }
-
-        const orders = await paymentCollection.find(filter).toArray();
-        res.json(orders);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
 
   // get admin page myorder 
   app.get("/adminuserMy", async (req, res) => {
@@ -2373,29 +1418,6 @@ app.post ('/fail', async(req,res)=>{
 
 
 
-app.delete("/manageAllOrderDelete/:id", async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    // Convert id to ObjectId
-    const objectId = new ObjectId(id);
-    
-    // Attempt to delete the document
-    const result = await paymentCollection.deleteOne({ _id: objectId });
-
-    // Check if deletion was successful
-    if (result.deletedCount === 0) {
-      return res.status(404).json({ message: 'Order not found' });
-    }
-
-    // Respond with success
-    res.status(200).json({ message: 'Order deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting order:', error);
-    res.status(500).json({ message: 'An error occurred while deleting the order' });
-  }
-});
-
 //   post features product 
 //    post product buyer 
 app.post('/addnotice', async(req,res) =>{
@@ -2426,19 +1448,9 @@ app.get('/features', async(req,res)=>{
     res.json(result)
 });
 
-app.post('/fashion',async(req,res)=>{
-    const value=req.body;
-    console.log(value)
-    const output=await fashionCollection.insertOne(value);
-    res.json(output)
-});
 
-app.get('/fashion', async(req,res)=>{
-    const result=await fashionCollection.find({}).toArray()
-    res.json(result)
-});
 
-// buyer status update 
+
 
  app.put("/buyerStatusUpdate/:id", async (req, res) => {
     // console.log(req.body)
